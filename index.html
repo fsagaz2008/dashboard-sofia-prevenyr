@@ -164,21 +164,32 @@ async function loadDashboard() {
         porServico[key] = (porServico[key] || 0) + Number(a.total || 0);
       }
     });
-    const servLabels = Object.keys(porServico);
+    const servLabelsFull = Object.keys(porServico);
     const servData = Object.values(porServico);
     const palette = ['#2a78d6','#1baf7a','#eda100','#008300','#4a3aa7','#e34948','#e87ba4','#eb6834'];
+
+    function truncateLabel(str, max) {
+      return str.length > max ? str.slice(0, max - 1) + '…' : str;
+    }
+    const servLabels = servLabelsFull.map(l => truncateLabel(l, 18));
 
     if (chartAgendamentos) chartAgendamentos.destroy();
     chartAgendamentos = new Chart(document.getElementById('chartAgendamentos'), {
       type: 'bar',
       data: {
         labels: servLabels,
-        datasets: [{ data: servData, backgroundColor: servLabels.map((_, i) => palette[i % palette.length]), borderRadius: 4 }]
+        datasets: [{ data: servData, backgroundColor: servLabelsFull.map((_, i) => palette[i % palette.length]), borderRadius: 4 }]
       },
       options: {
         responsive: true, maintainAspectRatio: false,
-        plugins: { legend: { display: false } },
-        scales: { x: { grid: { display: false } }, y: { beginAtZero: true, ticks: { precision: 0 } } }
+        plugins: {
+          legend: { display: false },
+          tooltip: { callbacks: { title: (items) => servLabelsFull[items[0].dataIndex] } }
+        },
+        scales: {
+          x: { grid: { display: false }, ticks: { autoSkip: false, maxRotation: 45, minRotation: 45, font: { size: 10 } } },
+          y: { beginAtZero: true, ticks: { precision: 0 } }
+        }
       }
     });
 
